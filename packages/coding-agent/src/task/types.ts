@@ -174,6 +174,7 @@ export interface AgentDefinition {
 	output?: unknown;
 	blocking?: boolean;
 	autoloadSkills?: string[];
+	hide?: boolean;
 	source: AgentSource;
 	filePath?: string;
 }
