@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-05-26T06:59:00.104Z",
-  "updatedAt": "2026-05-26T08:11:34.128Z",
+  "updatedAt": "2026-05-26T08:14:55.929Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -35,19 +35,23 @@
       "id": "G003-visible-definitions-gate",
       "title": "Remove OMP defaults and enforce exact visible definitions",
       "objective": "Remove default OMP commands/skills/rules/agents; visible workflow definitions must equal deep-interview, ralplan, ultragoal, team; rewrite/internalize references to non-selected workflows.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-05-26T06:59:21Z",
-      "updatedAt": "2026-05-26T06:59:21Z"
+      "updatedAt": "2026-05-26T08:14:55.386Z",
+      "completedAt": "2026-05-26T08:14:55.386Z",
+      "evidence": "G003-visible-definitions-gate complete: current repo removes OMP default visible definitions and enforces exactly four public definitions. Evidence: bun scripts/check-visible-definitions.ts PASS; bun scripts/verify-g002-gates.ts PASS exact four visible definitions across .omp/.codex skills, agents, commands, and rules. Audit recorded in .omx/ultragoal/goals.json and .omx/ultragoal/ledger.jsonl."
     },
     {
       "id": "G004-inline-tools-no-mcp",
       "title": "Preserve inline/local tools while excluding MCP",
       "objective": "Preserve local tools such as read/write/edit/bash/search/find/AST/local artifact tools; quarantine/remove MCP dependencies/imports/commands/config/defaults/registries/metadata/docs; add positive local-tool and negative MCP tests.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-05-26T06:59:21Z",
-      "updatedAt": "2026-05-26T06:59:21Z"
+      "updatedAt": "2026-05-26T08:14:55.929Z",
+      "completedAt": "2026-05-26T08:14:55.929Z",
+      "evidence": "G004-inline-tools-no-mcp complete: inline/local OMP tools are preserved while public/default MCP surfaces are quarantined. Evidence: bun scripts/verify-g002-gates.ts PASS MCP quarantine/no default discoverable MCP and inline/local tools preserved; bun test packages/coding-agent/test/acp-builtins.test.ts packages/coding-agent/test/sdk-tool-activation.test.ts packages/coding-agent/test/tool-discovery/tool-index.test.ts PASS 93 tests; .omx/ultragoal/goals.json and .omx/ultragoal/ledger.jsonl updated."
     },
     {
       "id": "G005-port-four-workflows",
