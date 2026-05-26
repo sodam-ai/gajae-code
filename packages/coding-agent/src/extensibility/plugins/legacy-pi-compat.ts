@@ -6,7 +6,7 @@ import * as url from "node:url";
 // Canonical scope for in-process pi packages. Plugins published against any of
 // the aliased scopes below (mariozechner's original publish, earendil-works'
 // fork, or the canonical @gajae-code scope itself) are remapped to this scope and
-// resolved against the bundled copy that ships inside the omp binary. This
+// resolved against the bundled copy that ships inside the gjc binary. This
 // keeps plugins running against the exact runtime state of the host (single
 // module registry, single tool registry, etc.) regardless of which historical
 // scope name they happened to declare in their peerDependencies.
@@ -19,8 +19,24 @@ const CANONICAL_PI_SCOPE = "@gajae-code";
 // plugin's own node_modules tree at install time.
 const PI_SCOPE_ALIASES = ["gajae-code", "mariozechner", "earendil-works"] as const;
 
-// Internal pi-* package basenames bundled inside the omp binary.
-const PI_PACKAGE_NAMES = ["pi-agent-core", "pi-ai", "gajae-code", "pi-natives", "pi-tui", "pi-utils"] as const;
+// Internal package basenames historically used by Pi plugins plus the current
+// Gajae package basenames bundled inside the gjc binary.
+const PI_PACKAGE_NAME_REMAPS: ReadonlyMap<string, string> = new Map<string, string>([
+	["agent-core", "agent-core"],
+	["ai", "ai"],
+	["coding-agent", "coding-agent"],
+	["gajae-code", "coding-agent"],
+	["natives", "natives"],
+	["pi-agent-core", "agent-core"],
+	["pi-ai", "ai"],
+	["pi-natives", "natives"],
+	["pi-tui", "tui"],
+	["pi-utils", "utils"],
+	["tui", "tui"],
+	["utils", "utils"],
+]);
+
+const PI_PACKAGE_NAMES = [...PI_PACKAGE_NAME_REMAPS.keys()] as const;
 
 const PI_SCOPE_ALTERNATION = PI_SCOPE_ALIASES.join("|");
 const PI_PACKAGE_ALTERNATION = PI_PACKAGE_NAMES.join("|");
@@ -35,7 +51,7 @@ const PI_SUBPATH_REMAPS: ReadonlyMap<string, string> = new Map<string, string>([
 	// `@mariozechner/pi-ai/oauth` re-exported `./utils/oauth/index.js`.
 	// Our pi-ai keeps the implementation under `utils/oauth` but never added a
 	// root-level re-export, so map the upstream subpath onto it directly.
-	["pi-ai/oauth", "pi-ai/utils/oauth"],
+	["pi-ai/oauth", "ai/utils/oauth"],
 ]);
 
 const LEGACY_PI_SPECIFIER_FILTER = new RegExp(`^@(?:${PI_SCOPE_ALTERNATION})/(?:${PI_PACKAGE_ALTERNATION})(?:/.*)?$`);
@@ -70,7 +86,13 @@ function remapLegacyPiSpecifier(specifier: string): string | null {
 		return null;
 	}
 	const rest = specifier.slice(slashIdx + 1);
-	const remappedSubpath = PI_SUBPATH_REMAPS.get(rest) ?? rest;
+	const [packageName, ...subpathParts] = rest.split("/");
+	const canonicalPackageName = PI_PACKAGE_NAME_REMAPS.get(packageName);
+	if (!canonicalPackageName) {
+		return null;
+	}
+	const canonicalRest = [canonicalPackageName, ...subpathParts].join("/");
+	const remappedSubpath = PI_SUBPATH_REMAPS.get(rest) ?? PI_SUBPATH_REMAPS.get(canonicalRest) ?? canonicalRest;
 	return `${CANONICAL_PI_SCOPE}/${remappedSubpath}`;
 }
 
