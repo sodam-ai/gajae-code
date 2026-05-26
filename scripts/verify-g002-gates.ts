@@ -55,6 +55,8 @@ const REQUIRED_PRIVATE_EXPORT_BLOCKS = [
 	"./capability/mcp",
 	"./config/mcp-schema",
 	"./discovery/mcp-json",
+	"./exa",
+	"./exa/*",
 	"./exa/mcp-client",
 	"./internal-urls/mcp-protocol",
 	"./modes/components/runtime-mcp-add-wizard",
@@ -69,11 +71,25 @@ const FORBIDDEN_PACKAGE_IMPORTS = [
 	"@gajae-code/coding-agent/capability/mcp",
 	"@gajae-code/coding-agent/config/mcp-schema",
 	"@gajae-code/coding-agent/discovery/mcp-json",
+	"@gajae-code/coding-agent/exa",
+	"@gajae-code/coding-agent/exa/factory",
 	"@gajae-code/coding-agent/exa/mcp-client",
+	"@gajae-code/coding-agent/exa/search",
+	"@gajae-code/coding-agent/exa/types",
 	"@gajae-code/coding-agent/internal-urls/mcp-protocol",
 	"@gajae-code/coding-agent/modes/components/runtime-mcp-add-wizard",
 	"@gajae-code/coding-agent/modes/controllers/runtime-mcp-command-controller",
 	"@gajae-code/coding-agent/slash-commands/helpers/mcp",
+] as const;
+const FORBIDDEN_PACKAGE_SYMBOLS = [
+	{
+		specifier: "@gajae-code/coding-agent",
+		symbols: ["exaTools", "callExaTool", "searchTools", "researcherTools", "websetsTools"],
+	},
+	{
+		specifier: "@gajae-code/coding-agent/tools",
+		symbols: ["exaTools", "callExaTool", "searchTools", "researcherTools", "websetsTools"],
+	},
 ] as const;
 const REQUIRED_LOCAL_TOOL_FILES = [
 	"packages/coding-agent/src/tools/read.ts",
@@ -224,6 +240,7 @@ async function verifyMcpQuarantine(): Promise<GateResult> {
 	const publicDocFindings = await findPublicDocFindings();
 	const exaMcpDocFindings = await findExaMcpDocFindings();
 	const forbiddenImportFindings = await probeForbiddenPackageImports();
+	const forbiddenSymbolFindings = await probeForbiddenPackageSymbols();
 	const removedPublicDocsStillPresent = [
 		"docs/mcp-config.md",
 		"docs/mcp-runtime-lifecycle.md",
@@ -244,6 +261,7 @@ async function verifyMcpQuarantine(): Promise<GateResult> {
 		`public doc findings: ${publicDocFindings.join(", ") || "<none>"}`,
 		`Exa MCP fallback doc findings: ${exaMcpDocFindings.join(", ") || "<none>"}`,
 		`forbidden package imports still resolving: ${forbiddenImportFindings.join(", ") || "<none>"}`,
+		`forbidden package symbols still exported: ${forbiddenSymbolFindings.join(", ") || "<none>"}`,
 		`removed public MCP docs still present: ${removedPublicDocsStillPresent.join(", ") || "<none>"}`,
 	];
 
@@ -253,6 +271,7 @@ async function verifyMcpQuarantine(): Promise<GateResult> {
 			exposedMcpKeys.length === 0 &&
 			missingPrivateBlocks.length === 0 &&
 			forbiddenImportFindings.length === 0 &&
+			forbiddenSymbolFindings.length === 0 &&
 			publicDocFindings.length === 0 &&
 			exaMcpDocFindings.length === 0 &&
 			removedPublicDocsStillPresent.length === 0 &&
@@ -305,6 +324,29 @@ async function probeForbiddenPackageImports(): Promise<string[]> {
 		});
 		const exitCode = await proc.exited;
 		if (exitCode === 0) findings.push(specifier);
+	}
+	return findings;
+}
+
+async function probeForbiddenPackageSymbols(): Promise<string[]> {
+	const findings: string[] = [];
+	for (const entry of FORBIDDEN_PACKAGE_SYMBOLS) {
+		const source = [
+			`const m = await import(${JSON.stringify(entry.specifier)});`,
+			`const symbols = ${JSON.stringify(entry.symbols)};`,
+			`const found = symbols.filter(symbol => Object.prototype.hasOwnProperty.call(m, symbol));`,
+			`if (found.length > 0) { console.error(found.join(",")); process.exit(0); }`,
+			`process.exit(1);`,
+		].join("\n");
+		const proc = Bun.spawn({
+			cmd: ["bun", "-e", source],
+			cwd: repoRoot,
+			stdout: "ignore",
+			stderr: "pipe",
+		});
+		const stderr = await new Response(proc.stderr).text();
+		const exitCode = await proc.exited;
+		if (exitCode === 0) findings.push(`${entry.specifier}: ${stderr.trim()}`);
 	}
 	return findings;
 }

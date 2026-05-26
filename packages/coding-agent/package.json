@@ -94,6 +94,8 @@
 		"./capability/mcp": null,
 		"./config/mcp-schema": null,
 		"./discovery/mcp-json": null,
+		"./exa": null,
+		"./exa/*": null,
 		"./exa/mcp-client": null,
 		"./internal-urls/mcp-protocol": null,
 		"./modes/components/runtime-mcp-add-wizard": null,
@@ -246,14 +248,6 @@
 		"./hashline/*": {
 			"types": "./src/hashline/*.ts",
 			"import": "./src/hashline/*.ts"
-		},
-		"./exa": {
-			"types": "./src/exa/index.ts",
-			"import": "./src/exa/index.ts"
-		},
-		"./exa/*": {
-			"types": "./src/exa/*.ts",
-			"import": "./src/exa/*.ts"
 		},
 		"./exec/*": {
 			"types": "./src/exec/*.ts",
